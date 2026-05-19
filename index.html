@@ -6,8 +6,9 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
     />
-    <title>ClassPulse — Student Tracker</title>
+    <title>Attendance & Student Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="icon" href="ascl.webp" />
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
       rel="stylesheet"
@@ -788,7 +789,10 @@
       <div class="header">
         <div class="header-top">
           <div class="app-logo"></div>
-          <div class="header-title">ASCOL 4sem Sec A Students Attendance</div>
+          <div class="header-title">
+            ASCOL 4<sup>th</sup> sem Sec A <br />
+            Students Attendance
+          </div>
           <button class="btn btn-sm" onclick="openModal('modal-addSubj')">
             + Subject
           </button>
@@ -1071,7 +1075,7 @@
       let state = {
         subjects: [],
         students: {},
-        sessions: [],
+        classes: [],
         assignments: [],
         remarks: {},
       };
@@ -1322,7 +1326,7 @@
           toast("No students added");
           return;
         }
-        const idx = state.sessions.findIndex(
+        const idx = state.classes.findIndex(
           (s) => s.subjId === activeSubjId && s.date === date,
         );
         const rec = {
@@ -1331,8 +1335,8 @@
           topic,
           statuses: { ...attStatuses },
         };
-        if (idx >= 0) state.sessions[idx] = rec;
-        else state.sessions.push(rec);
+        if (idx >= 0) state.classes[idx] = rec;
+        else state.classes.push(rec);
         document.getElementById("att-topic").value = "";
         saveState();
         renderAttLog();
@@ -1371,12 +1375,12 @@
           );
           statuses[s.id] = match ? "P" : "A";
         });
-        const idx = state.sessions.findIndex(
+        const idx = state.classes.findIndex(
           (s) => s.subjId === activeSubjId && s.date === date,
         );
         const rec = { subjId: activeSubjId, date, topic, statuses };
-        if (idx >= 0) state.sessions[idx] = rec;
-        else state.sessions.push(rec);
+        if (idx >= 0) state.classes[idx] = rec;
+        else state.classes.push(rec);
         document.getElementById("att-paste-input").value = "";
         document.getElementById("att-paste-topic").value = "";
         saveState();
@@ -1390,7 +1394,7 @@
           el.innerHTML = "";
           return;
         }
-        const logs = state.sessions
+        const logs = state.classes
           .filter((s) => s.subjId === activeSubjId)
           .sort((a, b) => b.date.localeCompare(a.date))
           .slice(0, 5);
@@ -1399,7 +1403,7 @@
           return;
         }
         el.innerHTML =
-          `<div class="card" style="margin-top:14px"><div class="card-title">Recent sessions</div>` +
+          `<div class="card" style="margin-top:14px"><div class="card-title">Recent classes</div>` +
           logs
             .map((l) => {
               const vals = Object.values(l.statuses || {});
@@ -1529,7 +1533,7 @@
             '<div class="empty"><div class="empty-icon">👆</div>Select a subject</div>';
           return;
         }
-        const logs = state.sessions
+        const logs = state.classes
           .filter((s) => s.subjId === activeSubjId && s.topic)
           .sort((a, b) => a.date.localeCompare(b.date));
         if (!logs.length) {
@@ -1581,20 +1585,18 @@
           return;
         }
 
-        const sessions = state.sessions.filter(
-          (s) => s.subjId === activeSubjId,
-        );
+        const classes = state.classes.filter((s) => s.subjId === activeSubjId);
         const asgns = state.assignments.filter(
           (a) => a.subjId === activeSubjId,
         );
-        const totalSess = sessions.length;
+        const totalSess = classes.length;
 
         // summary metrics
         const avgAtt =
           totalSess > 0
             ? Math.round(
                 students.reduce((acc, s) => {
-                  const p = sessions.filter(
+                  const p = classes.filter(
                     (sess) =>
                       sess.statuses[s.id] === "P" ||
                       sess.statuses[s.id] === "L",
@@ -1605,7 +1607,7 @@
             : 0;
         const lowAtt = students.filter((s) => {
           if (!totalSess) return false;
-          const p = sessions.filter(
+          const p = classes.filter(
             (sess) =>
               sess.statuses[s.id] === "P" || sess.statuses[s.id] === "L",
           ).length;
@@ -1614,7 +1616,7 @@
 
         let html = `<div class="metrics">
     <div class="metric-card"><div class="metric-val">${students.length}</div><div class="metric-label">Students</div></div>
-    <div class="metric-card"><div class="metric-val">${totalSess}</div><div class="metric-label">Sessions</div></div>
+    <div class="metric-card"><div class="metric-val">${totalSess}</div><div class="metric-label">classes</div></div>
     <div class="metric-card"><div class="metric-val">${avgAtt}%</div><div class="metric-label">Avg attendance</div></div>
     <div class="metric-card"><div class="metric-val">${asgns.length}</div><div class="metric-label">Assignments</div></div>
   </div>`;
@@ -1625,13 +1627,13 @@
 
         html += students
           .map((s) => {
-            const p = sessions.filter(
+            const p = classes.filter(
               (sess) => sess.statuses[s.id] === "P",
             ).length;
-            const la = sessions.filter(
+            const la = classes.filter(
               (sess) => sess.statuses[s.id] === "L",
             ).length;
-            const ab = sessions.filter(
+            const ab = classes.filter(
               (sess) => sess.statuses[s.id] === "A",
             ).length;
             const pct =
@@ -1779,7 +1781,7 @@
         if (!confirm("Remove this subject and all its data?")) return;
         state.subjects = state.subjects.filter((s) => s.id !== id);
         delete state.students[id];
-        state.sessions = state.sessions.filter((s) => s.subjId !== id);
+        state.classes = state.classes.filter((s) => s.subjId !== id);
         state.assignments = state.assignments.filter((a) => a.subjId !== id);
         if (activeSubjId === id) activeSubjId = state.subjects[0]?.id || null;
         saveState();
